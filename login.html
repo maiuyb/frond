@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登陆</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafcff;
+        }
+        .login-container {
+            background: #fff;
+            padding: 36px 30px 24px 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 16px #e0e0e0;
+            min-width: 320px;
+        }
+        .error { color: red; }
+        .success { color: green; }
+        #loginForm label {
+            display: inline-block;
+            width: 90px;
+            text-align: right;
+        }
+        #loginForm input[type="text"],
+        #loginForm input[type="password"] {
+            width: 180px;
+            padding: 5px 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+        }
+        #loginForm input[type="submit"] {
+            width: 100%;
+            padding: 8px 0;
+            margin-top: 8px;
+            font-size: 1.05rem;
+            border-radius: 5px;
+            border: none;
+            background: #1890ff;
+            color: #fff;
+            cursor: pointer;
+        }
+        #message { margin-top: 10px; min-height: 1.5em; }
+        a { color: #1890ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+    <script type="module">
+      import { setupLogin } from './login_register.js';
+      document.addEventListener('DOMContentLoaded', () => {
+        setupLogin();
+      });
+    </script>
+</head>
+<body>
+    <div class="login-container">
+        <form id="loginForm">
+            <label>用户名：</label>
+            <input type="text" name="username" placeholder="请输入用户名"><br><br>
+            <label for="pwd">密 码：</label>
+            <input type="password" id="pwd" name="password" placeholder="请输入密码"><br><br>
+            <input type="submit" value="登录"><br><br>
+            <a href="register.html">还没有账号，去注册一个</a>
+            <div id="message"></div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            const messageDiv = document.getElementById('message');
+            try {
+                const response = await fetch('http://localhost:3000/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    messageDiv.className = 'success';
+                    messageDiv.textContent = result.message;
+                    localStorage.setItem('userId', result.userId);
+                    setTimeout(() => {
+                        window.location.href = 'index.html'; 
+                    }, 2000);
+                } else {
+                    messageDiv.className = 'error';
+                    messageDiv.textContent = result.message;
+                }
+            } catch (error) {
+                console.error('登录请求失败:', error);
+                messageDiv.className = 'error';
+                messageDiv.textContent = '网络错误，请重试';
+            }
+        });
+    </script>
+</body>
+</html>

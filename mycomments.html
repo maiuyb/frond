@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>我的评论</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body {
+      background: #f7fafd;
+      font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #1890ff;
+      color: #fff;
+      padding: 28px 0 18px 0;
+      text-align: center;
+      box-shadow: 0 2px 12px #e3eaf5;
+    }
+    header h1 {
+      margin: 0 0 10px 0;
+      font-size: 2rem;
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .comments-container {
+      margin-top: 34px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px #e3eaf5;
+      padding: 28px 18px 16px 18px;
+      max-width: 560px;
+      width: 96vw;
+      min-height: 120px;
+    }
+    .comment-item {
+      border-bottom: 1px solid #eee;
+      padding: 12px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .comment-item:last-child {
+      border-bottom: none;
+    }
+    .comment-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .comment-venue {
+      color: #1890ff;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-right: 10px;
+      font-size: 1.07em;
+      transition: color 0.15s;
+    }
+    .comment-venue:hover {
+      color: #1766cc;
+    }
+    .comment-text {
+      color: #333;
+      font-size: 1.02em;
+      word-break: break-all;
+    }
+    .comment-meta {
+      color: #888;
+      font-size: 0.93em;
+      margin-top: 2px;
+    }
+    .delete-comment-btn {
+      margin-left: 14px;
+      background: #ff4d4f;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 10px;
+      font-size: 0.98em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .delete-comment-btn:hover {
+      background: #cf1322;
+    }
+    .empty-tip {
+      color: #aaa;
+      text-align: center;
+      margin: 28px 0 0 0;
+      font-size: 1.1em;
+    }
+    .back-home {
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      z-index: 99;
+      display: inline-block;
+      background: #1890ff;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 18px 7px 16px;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 2px 8px #e1eaf6;
+      transition: background 0.2s;
+    }
+    .back-home:hover {
+      background: #1766cc;
+      color: #fff;
+      text-decoration: none;
+    }
+    @media (max-width: 600px) {
+      header h1 { font-size: 1.18rem; }
+      .comments-container { padding: 10px 2vw 6px 2vw; }
+      .back-home { left: 8px; top: 8px; padding: 6px 12px 6px 10px; font-size: 0.98rem; }
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-home">&#8592; 返回首页</a>
+  <header>
+    <h1>我的评论</h1>
+  </header>
+  <main>
+    <div class="comments-container" id="commentsContainer">
+      <div class="empty-tip" id="emptyTip">正在加载…</div>
+    </div>
+  </main>
+  <script>
+    // 获取我的唯一 userId
+    function getMyUserId() {
+      let uid = localStorage.getItem('my_user_id');
+      if (!uid) {
+        uid = 'u_' + Math.random().toString(36).slice(2) + Date.now();
+        localStorage.setItem('my_user_id', uid);
+      }
+      return uid;
+    }
+    const myUserId = getMyUserId();
+
+    // 获取所有场馆数据
+    const API_BASE = "http://localhost:4000";
+    let venueList = [];
+
+    // 收集所有"venue_comments_x"的我的评论
+    function getMyComments() {
+      const comments = [];
+      // 枚举所有localStorage key
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("venue_comments_")) {
+          try {
+            const arr = JSON.parse(localStorage.getItem(key) || "[]");
+            const venueIndex = parseInt(key.replace("venue_comments_", ""), 10);
+            for (const c of arr) {
+              if (c.userId === myUserId) {
+                comments.push({
+                  ...c,
+                  venueIndex
+                });
+              }
+            }
+          } catch (e) {}
+        }
+      }
+      return comments;
+    }
+
+    // 渲染评论
+    function renderComments() {
+      const container = document.getElementById("commentsContainer");
+      const myComments = getMyComments();
+      if (myComments.length === 0) {
+        container.innerHTML = '<div class="empty-tip">你还没有写过评论</div>';
+        return;
+      }
+      // 按时间倒序
+      myComments.sort((a, b) => (b.time > a.time ? 1 : -1));
+      container.innerHTML = myComments.map((c, idx) => {
+        const venue = venueList[c.venueIndex] || {};
+        const venueName = venue["场馆"] || `场馆${c.venueIndex}`;
+        return `
+        <div class="comment-item" data-index="${c.venueIndex}" data-time="${c.time}">
+          <div class="comment-main">
+            <span class="comment-venue" data-goto="${c.venueIndex}">${venueName}</span>
+            <button class="delete-comment-btn" data-del-idx="${c.venueIndex}" data-del-time="${c.time}">删除</button>
+          </div>
+          <div class="comment-text">${c.text}</div>
+          <div class="comment-meta">${c.time}</div>
+        </div>
+        `;
+      }).join("");
+    }
+
+    // 跳转到对应场馆详情
+    document.getElementById("commentsContainer").addEventListener("click", function(e) {
+      // 跳转
+      if (e.target.classList.contains("comment-venue")) {
+        const idx = e.target.getAttribute("data-goto");
+        window.location.href = "main.html?index=" + idx;
+      }
+      // 删除
+      if (e.target.classList.contains("delete-comment-btn")) {
+        const vIdx = e.target.getAttribute("data-del-idx");
+        const cTime = e.target.getAttribute("data-del-time");
+        const key = "venue_comments_" + vIdx;
+        let arr = JSON.parse(localStorage.getItem(key) || "[]");
+        // 只删自己的评论，且用 time 匹配唯一性（防止误删）
+        arr = arr.filter(item => !(item.userId === myUserId && item.time === cTime));
+        localStorage.setItem(key, JSON.stringify(arr));
+        renderComments();
+      }
+    });
+
+    // 加载场馆列表后渲染
+    fetch(API_BASE + "/api/venues")
+      .then(res => res.json())
+      .then(data => {
+        venueList = data || [];
+        renderComments();
+      })
+      .catch(() => {
+        venueList = [];
+        renderComments();
+      });
+  </script>
+</body>
+</html>

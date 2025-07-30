@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>活动列表</title>
+  <meta name="viewport" content="width=400, initial-scale=1">
+  <style>
+    body {
+      background: #f7fafd;
+      font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+    .search-container {
+      position: relative;
+      width: 370px;
+      margin: 60px auto 0 auto;
+      padding-bottom: 40px;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 4px 24px #e3eaf5;
+      min-height: 120px;
+      transition: box-shadow 0.2s;
+    }
+    .search-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 30px;
+    }
+    #searchInput {
+      flex: 1;
+      font-size: 1.18rem;
+      padding: 14px 18px;
+      border-radius: 10px;
+      border: 1.5px solid #e7eaf3;
+      outline: none;
+      transition: border 0.2s;
+      box-sizing: border-box;
+      background: #f5f8ff;
+    }
+    #searchInput:focus {
+      border: 1.5px solid #1890ff;
+      background: #fff;
+    }
+    #searchBtn {
+      padding: 12px 24px;
+      font-size: 1rem;
+      background: #1890ff;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.18s;
+      letter-spacing: 2px;
+    }
+    #searchBtn:hover {
+      background: #1766cc;
+    }
+    .venue-list {
+      margin-top: 25px;
+      background: #fafdff;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px #e6eaf1;
+      border: 1px solid #e9eff7;
+      max-height: 340px;
+      overflow-y: auto;
+      font-size: 1.09rem;
+      position: static;
+      display: block;
+      padding: 0;
+      /* smooth scroll bar */
+      scrollbar-width: thin;
+      scrollbar-color: #dbeafe #fff;
+    }
+    .venue-list::-webkit-scrollbar {
+      width: 6px;
+      background: #f8fafc;
+    }
+    .venue-list::-webkit-scrollbar-thumb {
+      background: #e1e7f5;
+      border-radius: 4px;
+    }
+    .venue-item {
+      padding: 13px 21px;
+      cursor: pointer;
+      white-space: pre-line;
+      border-bottom: 1px solid #f1f5fa;
+      transition: background 0.16s, color 0.16s;
+      letter-spacing: 0.5px;
+      color: #2d466a;
+      font-size: 1.09rem;
+    }
+    .venue-item:last-child {
+      border-bottom: none;
+    }
+    .venue-item:hover, .venue-item.active {
+      background: #e8f3ff;
+      color: #1890ff;
+    }
+    .highlight {
+      color: #e91e63;
+      font-weight: bold;
+      background: #fff0f6;
+      border-radius: 3px;
+      padding: 0 1px;
+    }
+    @media (max-width: 500px) {
+      .search-container {
+        width: 98vw;
+        min-width: unset;
+        box-shadow: 0 3px 12px #e3eaf5;
+      }
+      .search-row {
+        margin-top: 15px;
+      }
+      #searchInput {
+        font-size: 1rem;
+        padding: 10px 11px;
+      }
+      #searchBtn {
+        padding: 10px 16px;
+        font-size: 0.96rem;
+      }
+      .venue-item {
+        font-size: 1rem;
+        padding: 11px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="search-container">
+    <div class="search-row">
+      <input id="searchInput" autocomplete="off" placeholder="输入场馆或活动名称..." />
+      <button id="searchBtn">搜索</button>
+    </div>
+    <div id="venueList" class="venue-list"></div>
+  </div>
+  <script>
+    let allVenues = [];
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const venueList = document.getElementById('venueList');
+
+ function getSearchParam() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('q') || '';
+}
+
+fetch('http://localhost:4000/api/venues')
+  .then(res => res.json())
+  .then(data => {
+    allVenues = data;
+    // 自动填充输入框
+    const initialQ = getSearchParam();
+    if (initialQ) {
+      searchInput.value = initialQ;
+      searchInput.dispatchEvent(new Event('input'));
+    } else {
+      renderList(allVenues, '');
+    }
+  });
+     
+    function doSearch() {
+      const kw = searchInput.value.trim();
+      let results = [];
+      if (!kw) {
+        results = allVenues;
+      } else {
+        results = allVenues.filter(item =>
+          (item['场馆'] && item['场馆'].toLowerCase().includes(kw.toLowerCase())) ||
+          (item['活动'] && item['活动'].toLowerCase().includes(kw.toLowerCase()))
+        );
+      }
+      renderList(results, kw);
+    }
+
+    searchInput.addEventListener('input', doSearch);
+    searchBtn.addEventListener('click', doSearch);
+
+    // 支持回车键触发搜索
+    searchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        doSearch();
+      }
+    });
+
+    function renderList(list, kw) {
+      if (!list.length) {
+        venueList.innerHTML = '<div class="venue-item" style="color:#bbb;">没有相关内容</div>';
+        return;
+      }
+      venueList.innerHTML = list.map((item, idx) => {
+        let venue = highlightKey(item['场馆'], kw);
+        return `<div class="venue-item" data-idx="${idx}">${venue}</div>`;
+      }).join('');
+    }
+
+    function highlightKey(text, kw) {
+      if (!kw || !text) return text || '';
+      return text.replace(new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), m => `<span class="highlight">${m}</span>`);
+    }
+
+    venueList.addEventListener('mousedown', function(e) {
+      const item = e.target.closest('.venue-item');
+      if (item && item.dataset.idx !== undefined) {
+        window.location.href = `main.html?index=${item.dataset.idx}`;
+      }
+    });
+
+    searchInput.addEventListener('blur', function() {
+      setTimeout(() => { venueList.style.display = 'none'; }, 150);
+    });
+    searchInput.addEventListener('focus', function() {
+      if (venueList.innerHTML.trim() !== '') venueList.style.display = 'block';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>体育活动平台</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      background: #f7fafd;
+      font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #1890ff;
+      color: #fff;
+      padding: 32px 0 18px 0;
+      text-align: center;
+      box-shadow: 0 2px 12px #e3eaf5;
+    }
+    header h1 {
+      margin: 0 0 16px 0;
+      font-size: 2.4rem;
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
+    nav {
+      margin-bottom: 16px;
+    }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 1.1rem;
+      margin: 0 18px;
+      padding: 3px 10px;
+      border-radius: 5px;
+      transition: background 0.18s;
+    }
+    nav a:hover, nav a:focus {
+      background: #40a9ff;
+    }
+    nav a[style*="color:green"] {
+      color: #52c41a !important;
+      font-weight: bold;
+    }
+    form {
+      display: flex;
+      justify-content: center;
+      margin: 18px auto 0 auto;
+      gap: 0;
+      max-width: 320px;
+      background: #fff;
+      border-radius: 8px;
+      padding: 8px 12px;
+      box-shadow: 0 2px 8px #e1eaf6;
+      align-items: center;
+    }
+    form input[type="text"] {
+      flex: 1;
+      padding: 8px 12px;
+      font-size: 1rem;
+      border-radius: 6px 0 0 6px;
+      border: 1px solid #d4e4f7;
+      outline: none;
+      min-width: 0;
+      background: #f5f8ff;
+      transition: border 0.2s;
+    }
+    form input[type="text"]:focus {
+      border: 1.5px solid #1890ff;
+      background: #fff;
+    }
+    form button {
+      padding: 8px 20px;
+      font-size: 1rem;
+      background: #1890ff;
+      color: #fff;
+      border: none;
+      border-radius: 0 6px 6px 0;
+      cursor: pointer;
+      transition: background 0.18s;
+    }
+    form button:hover {
+      background: #1766cc;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    #hero {
+      background: #fff;
+      margin-top: 36px;
+      padding: 36px 38px 30px 38px;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px #e3eaf5;
+      text-align: center;
+      max-width: 420px;
+      min-width: 240px;
+      width: 90vw;
+    }
+    #hero h2 {
+      margin: 0 0 18px 0;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1890ff;
+    }
+    #hero p {
+      margin: 0;
+      color: #666;
+      font-size: 1.15rem;
+    }
+    footer {
+      text-align: center;
+      color: #999;
+      padding: 20px 0 12px 0;
+      background: none;
+      font-size: 1rem;
+    }
+    @media (max-width: 600px) {
+      header h1 { font-size: 1.35rem; }
+      #hero { padding: 24px 6vw; font-size: 0.96rem; }
+      nav a { font-size: 1rem; margin: 0 8px; }
+      form { max-width: 95vw; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>体育活动平台</h1>
+    <nav>
+      <a href="index.html">首页</a>
+      <a href="abilitieslist.html">活动列表</a>
+      <a href="mylist.html">我的订单</a>
+      <a href="manage.html">管理</a>
+      <a href="login.html" style="color:green">登出</a>
+    </nav>
+    <form action="abilitieslist.html" method="get">
+      <input type="text" name="q" placeholder="搜索活动">
+      <button type="submit">搜索</button>
+    </form> 
+  </header>
+  <main>
+    <section id="hero">
+      <h2>欢迎加入体育活动平台！</h2>
+      <p>发现、报名、管理你的体育活动。</p>
+    </section>
+  </main>
+  <footer>
+    <p>&copy; 2025 体育活动平台</p>
+  </footer>
+</body>
+</html>

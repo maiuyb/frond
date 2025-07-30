@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>我的订单</title>
+  <style>
+    body { font-family: 微软雅黑, sans-serif; background: #f8f8f8; margin: 0; }
+    .container { max-width: 600px; margin: 40px auto; background: #fff; padding: 28px; border-radius: 14px; box-shadow: 0 2px 16px #eee; }
+    h2 { margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 18px;}
+    th, td { border: 1px solid #eee; padding: 10px; text-align: center; }
+    th { background: #f6f6f6; }
+    button { padding: 6px 16px; border-radius: 6px; border: none; background: #ff4d4f; color: #fff; cursor: pointer; }
+    /* 返回首页按钮样式 */
+    .back-home {
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      z-index: 99;
+      display: inline-block;
+      background: #1890ff;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 18px 7px 16px;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 2px 8px #e1eaf6;
+      transition: background 0.2s;
+    }
+    .back-home:hover {
+      background: #1766cc;
+      color: #fff;
+      text-decoration: none;
+    }
+    @media (max-width: 650px) {
+      .container { padding: 8px; }
+      table, th, td { font-size: 0.95em; }
+      .back-home { left: 8px; top: 8px; padding: 6px 12px 6px 10px; font-size: 0.98rem; }
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-home">&#8592; 返回首页</a>
+  <div class="container">
+    <h2>我的订单</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>场馆</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="ordersTbody"></tbody>
+    </table>
+    <div id="emptyTip" style="color:#aaa;text-align:center;margin-top:20px;"></div>
+  </div>
+  <script>
+    function getOrderKey() { return "my_orders"; }
+    function renderOrders() {
+      const orders = JSON.parse(localStorage.getItem(getOrderKey()) || "[]");
+      const tbody = document.getElementById("ordersTbody");
+      const emptyTip = document.getElementById("emptyTip");
+      tbody.innerHTML = "";
+      if (!orders.length) {
+        emptyTip.innerText = "暂无订单";
+        return;
+      }
+      emptyTip.innerText = "";
+      orders.forEach((order, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${order.venue}</td>
+          <!--<td>${order.activity}</td> 删除这一行 -->
+          <td>
+            <button onclick="cancelOrder(${idx})">取消预定</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    function cancelOrder(idx) {
+      let orders = JSON.parse(localStorage.getItem(getOrderKey()) || "[]");
+      orders.splice(idx, 1);
+      localStorage.setItem(getOrderKey(), JSON.stringify(orders));
+      renderOrders();
+    }
+    document.addEventListener("DOMContentLoaded", renderOrders);
+  </script>
+</body>
+</html>

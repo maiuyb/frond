@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>场馆详情页</title>
+  <style>
+    body { font-family: 微软雅黑, sans-serif; background: #f8f8f8; margin: 0; }
+    .container { max-width: 500px; margin: 40px auto; background: #fff; padding: 28px; border-radius: 14px; box-shadow: 0 2px 16px #eee; }
+    .section { margin-bottom: 32px; }
+    .title { font-size: 2rem; font-weight: bold; margin-bottom: 8px; }
+    .subtitle { color: #888; margin-bottom: 6px; }
+    .detail { line-height: 1.7; margin-bottom: 8px; }
+    .comments-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 8px; }
+    .comment { border-bottom: 1px solid #eee; padding: 8px 0; font-size: 1rem; display:flex; justify-content:space-between; align-items: center;}
+    .comment:last-child { border-bottom: none; }
+    .comment-content { flex: 1; }
+    .comment-meta { font-size: 0.85em; color: #888; }
+    .delete-comment-btn {
+      margin-left: 14px;
+      background: #ff4d4f;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 10px;
+      font-size: 0.92em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .delete-comment-btn:hover {
+      background: #cf1322;
+    }
+    #commentInput { width: 90%; padding: 8px; margin-top: 8px; font-size: 1rem; border-radius: 6px; border: 1px solid #ccc; }
+    #commentBtn { padding: 8px 20px; font-size: 1rem; margin-left: 8px; border-radius: 6px; border: none; background: #1890ff; color: #fff; cursor: pointer; }
+    #bookBtn { background: #52c41a; color: #fff; border: none; border-radius: 6px; padding: 12px 28px; font-size: 1.1rem; cursor: pointer; margin-top: 10px;}
+    #bookBtn:active { background: #389e0d; }
+
+    /* 返回首页按钮样式 */
+
+    .back-home {
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      z-index: 99;
+      display: inline-block;
+      background: #1890ff;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 18px 7px 16px;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 2px 8px #e1eaf6;
+      transition: background 0.2s;
+    }
+    .back-home:hover {
+      background: #1766cc;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: 10px; }
+      .title { font-size: 1.4rem; }
+      .back-home { left: 8px; top: 8px; padding: 6px 12px 6px 10px; font-size: 0.98rem; }
+    }
+    #bookBtn.cancel {
+      background: #ff4d4f !important;
+      color: #fff;
+    }
+    #bookBtn.cancel:active {
+      background: #cf1322 !important;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-home">&#8592; 返回首页</a>
+  <div class="container">
+    <!-- 场馆信息 -->
+    <div class="section">
+      <div class="title" id="venueName"></div>
+      <div class="subtitle" id="venueActivity"></div>
+      <div class="detail" id="venueDetail"></div>
+      <button id="bookBtn">预定场馆</button>
+    </div>
+    <!-- 评论区 -->
+    <div class="section">
+      <div class="comments-title">评论区</div>
+      <div id="commentsList"></div>
+      <div>
+        <input type="text" id="commentInput" placeholder="写下你的评论..." />
+        <button id="commentBtn">发布</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    // 获取URL参数index
+    function getQuery(name) {
+      const m = location.search.match(new RegExp('[?&]'+name+'=([^&]+)'));
+      return m ? decodeURIComponent(m[1]) : null;
+    }
+    const venueIndex = parseInt(getQuery('index'), 10) || 0;
+    const API_BASE = "http://localhost:4000";
+    let venueName = "";
+
+    // ==== 用户唯一标识 ====
+    // 若未分配过userId就自动分配一个并存在localStorage
+    function getMyUserId() {
+      let uid = localStorage.getItem('my_user_id');
+      if (!uid) {
+        uid = 'u_' + Math.random().toString(36).slice(2) + Date.now();
+        localStorage.setItem('my_user_id', uid);
+      }
+      return uid;
+    }
+    const myUserId = getMyUserId();
+
+    // 加载并渲染场馆数据
+    fetch(API_BASE + "/api/venues")
+      .then(res => res.json())
+      .then(data => {
+        if (!data || !data.length) {
+          document.body.innerHTML = "<h2>没有获取到场馆数据</h2>";
+          return;
+        }
+        const venue = data[venueIndex];
+        if (!venue) {
+          document.body.innerHTML = "<h2>未找到该场馆</h2>";
+          return;
+        }
+        venueName = venue["场馆"];
+        venueActivity = venue["活动"];
+        document.getElementById("venueName").innerText = venue["场馆"];
+        document.getElementById("venueActivity").innerText = "项目：" + venue["活动"];
+        document.getElementById("venueDetail").innerText = "详情：" + venue["详情"];
+        loadComments();
+        showBookBtn();
+      });
+
+    // ==== 评论功能：本地存储模拟 ====
+    function loadComments() {
+      const commentKey = "venue_comments_" + venueIndex;
+      const comments = JSON.parse(localStorage.getItem(commentKey) || "[]");
+      const commentsList = document.getElementById("commentsList");
+      if (comments.length === 0) {
+        commentsList.innerHTML = "<div style='color:#bbb'>还没有评论，快来抢沙发吧！</div>";
+      } else {
+        commentsList.innerHTML = comments.map((c, idx) => `
+          <div class="comment">
+            <div class="comment-content">
+              <div>${c.text}</div>
+              <div class="comment-meta">${c.time}${c.userId === myUserId ? "（我）" : ""}</div>
+            </div>
+            ${
+              c.userId === myUserId
+                ? `<button class="delete-comment-btn" data-idx="${idx}">删除</button>`
+                : ""
+            }
+          </div>
+        `).join("");
+      }
+    }
+    document.getElementById("commentBtn").onclick = function() {
+      const input = document.getElementById("commentInput");
+      const text = input.value.trim();
+      if (!text) { input.focus(); return; }
+      const commentKey = "venue_comments_" + venueIndex;
+      const comments = JSON.parse(localStorage.getItem(commentKey) || "[]");
+      comments.unshift({ text, time: new Date().toLocaleString(), userId: myUserId });
+      localStorage.setItem(commentKey, JSON.stringify(comments));
+      input.value = "";
+      loadComments();
+    };
+
+    // 删除评论
+    document.getElementById("commentsList").addEventListener("click", function(e) {
+      if (e.target.classList.contains("delete-comment-btn")) {
+        const idx = +e.target.dataset.idx;
+        const commentKey = "venue_comments_" + venueIndex;
+        const comments = JSON.parse(localStorage.getItem(commentKey) || "[]");
+        // 只允许删除自己的评论
+        if (comments[idx] && comments[idx].userId === myUserId) {
+          comments.splice(idx, 1);
+          localStorage.setItem(commentKey, JSON.stringify(comments));
+          loadComments();
+        }
+      }
+    });
+
+    // ==== 预定功能 ====
+    function getOrderKey() { return "my_orders"; }
+    function getOrderObj() {
+      return { venue: venueName, activity: venueActivity, venueIndex };
+    }
+    function hasBooked() {
+      const orders = JSON.parse(localStorage.getItem(getOrderKey()) || "[]");
+      return orders.some(o => o.venue === venueName && o.activity === venueActivity);
+    }
+    function showBookBtn() {
+      const btn = document.getElementById("bookBtn");
+      if (!venueName) return btn.style.display = "none";
+      btn.style.display = "";
+      if (hasBooked()) {
+        btn.innerText = "取消预定";
+        btn.classList.add("cancel");
+      } else {
+        btn.innerText = "预定场馆";
+        btn.classList.remove("cancel");
+      }
+    }
+    document.getElementById("bookBtn").onclick = function() {
+      let orders = JSON.parse(localStorage.getItem(getOrderKey()) || "[]");
+      if (hasBooked()) {
+        // 取消预定
+        orders = orders.filter(o => !(o.venue === venueName && o.activity === venueActivity));
+        localStorage.setItem(getOrderKey(), JSON.stringify(orders));
+        alert("已取消预定");
+      } else {
+        // 新预定
+        orders.push(getOrderObj());
+        localStorage.setItem(getOrderKey(), JSON.stringify(orders));
+        alert("预定成功！");
+      }
+      showBookBtn();
+    };
+  </script>
+</body>
+</html>
